@@ -6,9 +6,32 @@
 
     if(array_key_exists("action", $_POST)){
 
+
+
+
         if(isset($_POST["row_id"])){
 
-            if($_POST["action"] == "row-delete"){
+
+            if($_POST["action"] == "get-new-rows") {
+
+
+                $new_users = $dm->getNewUsers($_POST["row_id"]);
+
+                die(json_encode($new_users));
+
+                //Check the status of the row
+            }elseif($_POST["action"] == "update") {
+
+                //Check the status of the row
+                if($dm->check_status($_POST["row_id"])){
+                    die("ACTIVE");
+                }else{
+                    die("INACTIVE");
+                }
+
+
+                //Delete function
+            }elseif($_POST["action"] == "row-delete"){
 
                 $row_id = $_POST["row_id"];
 
@@ -68,6 +91,39 @@
 
                 });
 
+
+
+
+                setInterval(function(){
+
+                    jsonObj = [];
+
+                    $(".track-users-table").each(function(){
+                        var $r     = $(this);
+                        var row_id = $r.attr("uid");
+
+                        $.post("index.php", {'action':'update', row_id:row_id}, function(cloud_data){
+                            if(cloud_data == "INACTIVE"){
+                                $r.fadeOut("slow");
+                            }
+                        });
+
+                        jsonObj.push(row_id);
+
+                    });
+
+                    //Send for new items
+                    $.post("index.php", {'action':'get-new-rows', row_id:jsonObj}, function(cloud_data){
+                        console.log(cloud_data);
+                    });
+
+
+
+
+                }, 1000);
+
+
+
             });
 
         </script>
@@ -99,12 +155,12 @@
                             $result = $dm->getUsers();
                             $c = 0;
                             while($row = $result->fetch_assoc()) {
-                                print '<tr>
-                                    <td><a href="/sandbox2/willie/?email='.$row["email"].'">'.$row["full_name"].'</a></td>
-                                    <td>'.$row["username"].'</td>
-                                    <td>'.$row["email"].'</td>
-                                    <td><button class="btn btn-xs btn-danger delete-me" rid="'.$row["id"].'">Delete</button></td>
-                                </tr>';
+                                print '<tr class="track-users-table" uid="'.$row["id"].'">
+                                            <td><a href="/sandbox2/willie/?email='.$row["email"].'">'.$row["full_name"].'</a></td>
+                                            <td>'.$row["username"].'</td>
+                                            <td>'.$row["email"].'</td>
+                                            <td><button class="btn btn-xs btn-danger delete-me" rid="'.$row["id"].'">Delete</button></td>
+                                        </tr>';
                                 $c++;
                             }
 
